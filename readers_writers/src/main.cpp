@@ -117,8 +117,10 @@ void* reader( void* )
     {
       pthread_mutex_lock( &access_mutex );
 
-      if(stack.empty())
-        {
+      while(stack.empty())
+        { // POSIX треды могут произвольно просыпаться, поэтому
+          // стоит проверять условия выхода. В std::condition_variable
+          // передаётся лямбда, которая за это отвечает
           pthread_mutex_lock( &output_mutex );
             printf("Thread#%lld\tsleeps\n", pthread_self() );
           pthread_mutex_unlock( &output_mutex );
