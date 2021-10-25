@@ -41,16 +41,16 @@ int main(int argc, char** argv)
   for(i = 0; i < WRITERS_COUNT; ++i)
     {
       if( (retval = pthread_create( &t_writers[i], NULL, &newWriter, NULL)) )
-         {
-            fprintf(stderr, "Writer thread creation failed: %d\n", retval);
-         }
+        {
+          fprintf(stderr, "Writer thread creation failed: %d\n", retval);
+        }
     }
   for(i = 0; i < READERS_COUNT; ++i)
     {
       if( (retval = pthread_create( &t_readers[i], NULL, &newReader, NULL)) )
-         {
-            fprintf(stderr, "Reader thread creation failed: %d\n", retval);
-         }
+        {
+          fprintf(stderr, "Reader thread creation failed: %d\n", retval);
+        }
     }
 
   // Ожидание завершения
@@ -83,12 +83,11 @@ void* writer( void* )
     {
       pthread_mutex_lock( &access_mutex );
 
-
+      // Блокировка вывода
       pthread_mutex_lock( &output_mutex );
         printf("Writer#%lld\twrites\n", pthread_self() );
       pthread_mutex_unlock( &output_mutex );
 
-      // Записываю несколько значений в стек
       for( i = 0; i < DATA_SIZE; ++i)
         {
           stack.push(++counter);
@@ -106,7 +105,6 @@ void* writer( void* )
         {
           break;
         }
-
       // Задержка записи
       usleep(WRITERS_LATENCY);
     }
@@ -127,18 +125,21 @@ void* reader( void* )
         { // POSIX треды могут произвольно просыпаться, поэтому
           // стоит проверять условия выхода. В std::condition_variable
           // передаётся лямбда, которая за это отвечает
+
+          // Блокировка вывода
           pthread_mutex_lock( &output_mutex );
-            printf("Thread#%lld\tsleeps\n", pthread_self() );
+          printf("Thread#%lld\tsleeps\n", pthread_self() );
           pthread_mutex_unlock( &output_mutex );
 
           pthread_cond_wait( &cond_var, &access_mutex );
 
+          // Блокировка вывода
           pthread_mutex_lock( &output_mutex );
-            printf("Thread#%lld\tawakes\n", pthread_self() );
+          printf("Thread#%lld\tawakes\n", pthread_self() );
           pthread_mutex_unlock( &output_mutex );
         }
 
-      // Актуальное значение верхнего элемента
+      // Актуальное значения верхнего элемента
       var = stack.top();
       stack.pop();
 
@@ -147,10 +148,10 @@ void* reader( void* )
 
       pthread_mutex_unlock( &access_mutex );
 
+      // Блокировка вывода
       pthread_mutex_lock( &output_mutex );
         printf("Thread#%lld\t%d\n", pthread_self(), var );
       pthread_mutex_unlock( &output_mutex );
-
 
       // Задержка чтения
       usleep(READERS_LATENCY);
@@ -171,7 +172,7 @@ void* newWriter(void*)
   int temp = 0;
   int i = 0;
   while (1)
-  {
+    {
       pthread_rwlock_wrlock(&rwLock);
 
       for( i = 0; i < DATA_SIZE; ++i)
@@ -181,19 +182,21 @@ void* newWriter(void*)
 
       temp = counter;
 
+      // Блокировка вывода
       pthread_spin_lock(&spinLock);
         printf("Writer#%lld\twrites %d\n", pthread_self(), temp);
       pthread_spin_unlock(&spinLock);
 
       pthread_rwlock_unlock(&rwLock);
 
-
+      // Условие выхода из цикла
       if(temp >= RECORDS_COUNT - DATA_SIZE)
         {
           break;
         }
+      // Задержка записи
       usleep(WRITERS_LATENCY);
-  }
+    }
   pthread_exit(0);
 }
 
@@ -204,21 +207,23 @@ void* newReader(void*)
   while (1)
     {
       pthread_rwlock_rdlock(&rwLock);
+
       var = stack.top();
       temp = counter;
-//      pthread_mutex_lock( &output_mutex );
+
+      // Блокировка вывода
       pthread_spin_lock(&spinLock);
         printf("Thread#%lld\treads %d\n", pthread_self(), var );
-        pthread_spin_unlock(&spinLock);
-//      pthread_mutex_unlock( &output_mutex );
-      pthread_rwlock_unlock(&rwLock);
+      pthread_spin_unlock(&spinLock);
 
+      pthread_rwlock_unlock(&rwLock);
 
       // Условие выхода из цикла
       if( temp >= RECORDS_COUNT - DATA_SIZE )
         {
           break;
         }
+      // Задержка чтения
       usleep(READERS_LATENCY);
     }
 
