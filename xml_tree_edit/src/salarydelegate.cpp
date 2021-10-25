@@ -42,7 +42,7 @@ void SalaryDelegate::setModelData(QWidget *editor,
       auto new_avg = (old_summ - old_data.toInt() + lineEdit->text().toInt())
           / department->childCount();
 
-      department->setData(1,Qt::DisplayRole, new_avg);
+      department->setData(1 ,Qt::DisplayRole, new_avg);
       model->setData(index, lineEdit->text(), Qt::EditRole);
       emit dataChanged( old_data, 1);
     }
