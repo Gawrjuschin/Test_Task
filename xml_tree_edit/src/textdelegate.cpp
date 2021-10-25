@@ -1,8 +1,6 @@
 #include "textdelegate.h"
 #include <QLineEdit>
 
-#include <QDebug>
-
 TextDelegate::TextDelegate()
   : QItemDelegate()
 {

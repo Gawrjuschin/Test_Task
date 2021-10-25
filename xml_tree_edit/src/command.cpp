@@ -9,8 +9,6 @@ Command::~Command() = default;
 AddDepartmentCommand::AddDepartmentCommand(QTreeWidgetItem* item, QTreeWidget* parent, int index)
     : p_item(item), p_parent(parent), m_index(index)
 {
-    qDebug() << QString("New AddDepartmentCommand with item, index: %1, level: %2")
-                .arg(m_index);
 
 }
 AddDepartmentCommand::~AddDepartmentCommand() = default;
@@ -28,10 +26,9 @@ void AddDepartmentCommand::cancel()
 AddEmployeeCommand::AddEmployeeCommand(QTreeWidgetItem* item, QTreeWidgetItem* parent, int index)
     : p_item(item), p_parent(parent), m_index(index)
 {
-    qDebug() << QString("New AddEmployeeCommand with item, index: %1, level: %2")
-                .arg(m_index);
 
 }
+
 AddEmployeeCommand::~AddEmployeeCommand() = default;
 
 void AddEmployeeCommand::execute()
@@ -47,8 +44,6 @@ void AddEmployeeCommand::cancel()
 RemoveDepartmentCommand::RemoveDepartmentCommand(QTreeWidgetItem* item, QTreeWidget* parent, int index)
     : p_item(item), p_parent(parent), m_index(index)
 {
-    qDebug() << QString("New RemoveDepartmentCommand with item, index: %1, level: %2")
-                .arg(m_index);
 
 }
 
@@ -67,8 +62,6 @@ void RemoveDepartmentCommand::cancel()
 RemoveEmployeeCommand::RemoveEmployeeCommand(QTreeWidgetItem* item, QTreeWidgetItem* parent, int index)
     : p_item(item), p_parent(parent), m_index(index)
 {
-    qDebug() << QString("New RemoveEmployeeCommand with item, index: %1, level: %2")
-                .arg(m_index);
 
 }
 RemoveEmployeeCommand::~RemoveEmployeeCommand() = default;

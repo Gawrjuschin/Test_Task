@@ -9,14 +9,11 @@
 #include <QHeaderView>
 #include <QTreeWidgetItem>
 #include <QMouseEvent>
-
 #include <QFile>
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QXmlStreamReader>
 #include <QXmlStreamWriter>
-
-#include <QDebug>
 
 MainWindow::MainWindow(QWidget *parent)
   : QMainWindow(parent)
@@ -298,7 +295,6 @@ void MainWindow::readDepartment(QXmlStreamReader& reader)
   department->setFlags(department->flags() | Qt::ItemIsEditable);
 
   auto data = reader.attributes().front().value().toUtf8();
-  qDebug() << data;
   department->setText(0, data);
   department->setData(1, Qt::DisplayRole, 0);
 

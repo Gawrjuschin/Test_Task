@@ -3,8 +3,6 @@
 #include <QTreeWidgetItem>
 #include <QLineEdit>
 
-//#include <QDebug>
-
 SalaryDelegate::SalaryDelegate() = default;
 
 QWidget* SalaryDelegate::createEditor(QWidget* parent,
@@ -16,7 +14,6 @@ QWidget* SalaryDelegate::createEditor(QWidget* parent,
       if( !index.parent().parent().isValid() )
         {
           auto* editor = new QLineEdit(parent);
-          //    editor->setValidator();
           return editor;
         }
     }
