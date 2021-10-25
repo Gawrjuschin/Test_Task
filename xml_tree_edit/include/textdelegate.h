@@ -30,6 +30,9 @@ public:
 signals:
     void dataChanged(QVariant oldData, int colNum) const;
 
+private:
+    QRegularExpressionValidator* p_validator;
+
 };
 
 #endif // TEXTELEGATE_H

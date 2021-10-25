@@ -30,6 +30,9 @@ public:
 signals:
     void dataChanged(QVariant oldData, int colNum) const;
 
+private:
+    QIntValidator* p_validator;
+
 };
 
 #endif // SALARYDELEGATE_H

@@ -99,7 +99,7 @@ void MainWindow::addEmployee()
   function->setFlags(function->flags() | Qt::ItemIsEditable);
   function->setData(0, Qt::DisplayRole, QString());
   function->setData(1, Qt::DisplayRole, 0);
-  function->setText(2, QString(tr("Position")));
+  function->setText(2, QString(tr("Employment")));
   department->addChild(function);
 
   // Данные работника
@@ -295,16 +295,23 @@ void MainWindow::slot_dataChanged(QVariant oldData, int colNum)
 
 void MainWindow::readDepartments(QXmlStreamReader& reader)
 { // Считывает все отделы
-  reader.readNext();
 
-  while( !(reader.isEndElement() && reader.name() == QString::fromLatin1("departments"))  )
+//  reader.readNext();
+
+//  while( !(reader.isEndElement() && reader.name() == QString::fromLatin1("departments"))  )
+  qDebug() << ">" << reader.name();
+  do
     { // Считываем все отделы из перечня
+      reader.readNext();
       if (reader.isStartElement() && reader.name() == QString::fromLatin1("department"))
-        { // Найден отдел
+        { // Найден отдел <department>
           readDepartment(reader);
         }
-      reader.readNext();
+      // </department>
+//      reader.readNext();
     }
+  while( !(reader.isEndElement() && reader.name() == QString::fromLatin1("departments")) && !reader.atEnd() );
+  qDebug() << "<" << reader.name();
 }
 
 void MainWindow::readDepartment(QXmlStreamReader& reader)
@@ -318,25 +325,33 @@ void MainWindow::readDepartment(QXmlStreamReader& reader)
   department->setData(1, Qt::DisplayRole, 0);
   department->setText(2, data);
 
-  reader.readNext();
+//  reader.readNext();
 
-  while( !(reader.isEndElement() && reader.name() == QString::fromLatin1("department")) )
+//  while( !(reader.isEndElement() && reader.name() == QString::fromLatin1("department")) )
+  qDebug() << ">>" << reader.name();
+  do
     { // Считываем всё содержимое отдела
+      reader.readNext();
       if (reader.isStartElement() && reader.name() == QString::fromLatin1("employments"))
         { // Найден перечень сотрудников
           readEmployments(reader, department);
           p_treeWidget->addTopLevelItem(department);
         }
-      reader.readNext();
+//      reader.readNext();
     } // Считаны все перечни сотрудников отдела
+  while( !(reader.isEndElement() && reader.name() == QString::fromLatin1("department")) && !reader.atEnd() );
+  qDebug() << "<<" << reader.name();
 }
 
 QTreeWidgetItem* MainWindow::readEmployments(QXmlStreamReader& reader, QTreeWidgetItem* department)
 {  // Вернёт отдел с сотрудниками
-  reader.readNext();
+//  reader.readNext();
 
-  while( !(reader.isEndElement() && reader.name() == QString::fromLatin1("employments"))  )
+//  while( !(reader.isEndElement() && reader.name() == QString::fromLatin1("employments"))  )
+  qDebug() << ">>" << reader.name();
+  do
     { // Считываем всех сотрудников из перчня
+      reader.readNext();
       if (reader.isStartElement() && reader.name() == QString::fromLatin1("employment"))
         { // Найден сотрудник
           auto* employment = readEmployment(reader);
@@ -350,9 +365,9 @@ QTreeWidgetItem* MainWindow::readEmployments(QXmlStreamReader& reader, QTreeWidg
           department->setData(0, Qt::DisplayRole, department->childCount());
           department->setData(1, Qt::DisplayRole, new_summ);
         }
-      reader.readNext();
-
-    }
+//      reader.readNext();
+    } while( !(reader.isEndElement() && reader.name() == QString::fromLatin1("employments")) && !reader.atEnd() );
+  qDebug() << "<<" << reader.name();
   // Считан перечень сотрудников отдела
   return department;
 }
@@ -365,6 +380,8 @@ QTreeWidgetItem* MainWindow::readEmployment(QXmlStreamReader& reader)
   auto* name = new QTreeWidgetItem(employment);
   auto* middlename = new QTreeWidgetItem(employment);
 
+  employment->setText(2, QString::fromLatin1("Employment"));
+  employment->setData(1, Qt::DisplayRole, 0);
   employment->setFlags(employment->flags() | Qt::ItemIsEditable);
   surname->setFlags(employment->flags() | Qt::ItemIsEditable);
   name->setFlags(employment->flags() | Qt::ItemIsEditable);
@@ -374,10 +391,13 @@ QTreeWidgetItem* MainWindow::readEmployment(QXmlStreamReader& reader)
   name->setText(2, QString::fromLatin1("Name"));
   middlename->setText(2, QString::fromLatin1("Middlename"));
 
-  reader.readNext();
+//  reader.readNext();
 
-  while( !(reader.isEndElement() && reader.name() == QString::fromLatin1("employment")) )
+//  while( !(reader.isEndElement() && reader.name() == QString::fromLatin1("employment")) )
+  qDebug() << ">>>" << reader.name();
+  do
     { // Считываем все данные сотрудника
+      reader.readNext();
 
       if(reader.isStartElement() && reader.name() == QString::fromLatin1("surname"))
         {
@@ -412,7 +432,8 @@ QTreeWidgetItem* MainWindow::readEmployment(QXmlStreamReader& reader)
           employment->setData(1, Qt::DisplayRole, data);
         }
       reader.readNext();
-    }
+    } while( !(reader.isEndElement() && reader.name() == QString::fromLatin1("employment")) && !reader.atEnd() );
+  qDebug() << "<<<"  << reader.name();
   // Считан сотрудник из перечня
   return employment;
 }
@@ -445,6 +466,8 @@ void MainWindow::slot_open()
       p_file = old_file;
 
       QMessageBox msgBox;
+      msgBox.setIcon(QMessageBox::Critical);
+      msgBox.setWindowTitle(tr("Error!"));
       msgBox.setText(tr("Could not open document!"));
       msgBox.exec();
     }
@@ -454,16 +477,30 @@ void MainWindow::slot_open()
       ui->actSaveAs->setDisabled(false);
 
       QXmlStreamReader reader(p_file);
-      reader.readNext(); // Считываю первый элемент
+//      reader.readNext(); // Считываю первый элемент
 
-      while (!reader.atEnd() && !reader.hasError())
+//      while (!reader.atEnd() && !reader.hasError())
+      qDebug() << reader.name();
+      do
         { // Считываю весь файл
+          reader.readNext();
           if (reader.isStartElement() && reader.name() == QString::fromLatin1("departments"))
             { // Найден перечень отделов
+              qDebug() << "readDepartments";
               readDepartments(reader);
             }
-          reader.readNext();
+//          reader.readNext();
         } // Считан документ
+      while( !reader.atEnd() && !reader.hasError());
+      if(reader.hasError())
+        {
+          QMessageBox msgBox;
+          msgBox.setIcon(QMessageBox::Critical);
+          msgBox.setWindowTitle(tr("Error!"));
+          msgBox.setText(reader.errorString());
+          msgBox.exec();
+        }
+
       p_file->close();
     }
 }
@@ -472,18 +509,19 @@ void MainWindow::saveDocument()
 {
   QXmlStreamWriter writer(p_file);
 
-  auto N = p_treeWidget->topLevelItemCount();
 
   writer.setAutoFormatting(true);
 
   writer.writeStartDocument();
 
+  auto N = p_treeWidget->topLevelItemCount();
+
+  writer.writeStartElement(QString::fromLatin1("departments"));
   for(auto i = 0; i < N; ++i)
     {
-      writer.writeStartElement(QString::fromLatin1("departments"));
       writeDepartment(writer, p_treeWidget->topLevelItem(i));
-      writer.writeEndElement();
     }
+  writer.writeEndElement();
   writer.writeEndDocument();
 
   p_file->close();
