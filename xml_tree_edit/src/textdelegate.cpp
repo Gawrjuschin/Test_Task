@@ -29,7 +29,7 @@ void TextDelegate::setModelData(QWidget *editor,
   QVariant oldData(index.data());
   QVariant newData(lineEdit->text());
   model->setData(index, newData, Qt::EditRole);
-  emit dataChanged( oldData, 0 );
+  emit dataChanged( oldData, 2 );
 }
 
 void TextDelegate::updateEditorGeometry(QWidget *editor,
