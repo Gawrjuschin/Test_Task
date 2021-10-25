@@ -1,9 +1,12 @@
 #include "textdelegate.h"
 #include <QLineEdit>
+#include <QRegularExpressionValidator>
 
 TextDelegate::TextDelegate()
-  : QItemDelegate()
+  : p_validator(new QRegularExpressionValidator(this))
 {
+  QRegularExpression rx("([a-zA-Zа-яА-ЯЕё]+[\\s-]*)+");
+  p_validator->setRegularExpression(rx);
 
 }
 
@@ -11,7 +14,9 @@ QWidget* TextDelegate::createEditor(QWidget* parent,
                                     const QStyleOptionViewItem& option,
                                     const QModelIndex& index) const
 { // Возвращает элемент ввода
-  return new QLineEdit(parent);
+  auto* editor = new QLineEdit(parent);
+  editor->setValidator(p_validator);
+  return editor;
 }
 
 void TextDelegate::setEditorData(QWidget* editor,

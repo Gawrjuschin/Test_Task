@@ -1,15 +1,15 @@
 #include "mainwindow.h"
 
 #include <QApplication>
-#include <QFile>
-#include <QXmlStreamReader>
 
 int main(int argc, char *argv[])
 {
-    QApplication a(argc, argv);
-    MainWindow w;
-    w.setMinimumSize({640,480});
-    w.show();
+  QApplication a(argc, argv);
 
-    return a.exec();
+  MainWindow w;
+  w.setMinimumSize({640,480});
+  w.setWindowTitle(QString::fromLatin1("Xml Reader"));
+  w.show();
+
+  return a.exec();
 }

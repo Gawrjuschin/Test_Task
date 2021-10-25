@@ -2,8 +2,15 @@
 
 #include <QTreeWidgetItem>
 #include <QLineEdit>
+#include <QIntValidator>
 
-SalaryDelegate::SalaryDelegate() = default;
+constexpr int MAX_SALARY = 1'000'000;
+
+SalaryDelegate::SalaryDelegate()
+  : p_validator(new QIntValidator(0, MAX_SALARY, this))
+{
+
+}
 
 QWidget* SalaryDelegate::createEditor(QWidget* parent,
                                       const QStyleOptionViewItem& option,
@@ -14,6 +21,7 @@ QWidget* SalaryDelegate::createEditor(QWidget* parent,
       if( !index.parent().parent().isValid() )
         {
           auto* editor = new QLineEdit(parent);
+          editor->setValidator(p_validator);
           return editor;
         }
     }
@@ -24,6 +32,7 @@ void 	SalaryDelegate::setEditorData(QWidget* editor,
                                       const QModelIndex& index) const
 {
   auto* lineEdit = static_cast<QLineEdit*>(editor);
+  lineEdit->setValidator(p_validator);
   lineEdit->setText(index.data(Qt::DisplayRole).toString());
 }
 

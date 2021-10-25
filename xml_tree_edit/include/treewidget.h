@@ -4,13 +4,15 @@
 #include <QTreeWidget>
 
 class TreeWidget : public QTreeWidget
-{ // Наследование ради перегрузки mousePressEvent
-  // ради снятия выделения при клику по пустому месту
-    Q_OBJECT
+{
+  Q_OBJECT
 public:
-    TreeWidget(QWidget* parent = nullptr);
+  TreeWidget(QWidget* parent = nullptr);
+  // Наследование ради перегрузки mousePressEvent
+  // чтобы снять выделение при клике по пустому месту
+
 protected:
-    virtual void mousePressEvent(QMouseEvent* event) override;
+  virtual void mousePressEvent(QMouseEvent* event) override;
 };
 
 #endif // TREEWIDGET_H
