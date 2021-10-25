@@ -5,7 +5,7 @@
 TextDelegate::TextDelegate()
   : p_validator(new QRegularExpressionValidator(this))
 {
-  QRegularExpression rx("[\\w,\\s]+");
+  QRegularExpression rx("([a-zA-Zа-яА-ЯЕё]+[\\s-]*)+");
   p_validator->setRegularExpression(rx);
 
 }
