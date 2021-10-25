@@ -21,6 +21,7 @@ set(PROJECT_SOURCES
         src/command.cpp
         src/textdelegate.cpp
         src/salarydelegate.cpp
+        src/emptydelegate.cpp
         src/mainwindow.ui
 )
 
@@ -30,6 +31,7 @@ set(PROJECT_HEADERS
 		include/command.h
 		include/textdelegate.h
 		include/salarydelegate.h
+                include/emptydelegate.h
 )
 
 
