@@ -32,7 +32,7 @@ signals:
   void dataChanged(QVariant oldData, int colNum) const;
 
 private:
-  QIntValidator* p_validator;
+  QRegularExpressionValidator* p_validator;
 
 };
 

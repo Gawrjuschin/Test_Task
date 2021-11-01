@@ -60,6 +60,13 @@ private:
   void writeDepartment(QXmlStreamWriter& writer, QTreeWidgetItem* department);
   void saveDocument();
 
+  enum ColNum
+  {
+    COUNT,
+    SALARY,
+    TEXT
+  };
+
 };
 
 #endif // MAINWINDOW_H
