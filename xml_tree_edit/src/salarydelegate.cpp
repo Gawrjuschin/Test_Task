@@ -2,14 +2,13 @@
 
 #include <QTreeWidgetItem>
 #include <QLineEdit>
-#include <QIntValidator>
-
-constexpr int MAX_SALARY = 1'000'000;
+#include <QRegularExpressionValidator>
 
 SalaryDelegate::SalaryDelegate()
-  : p_validator(new QIntValidator(0, MAX_SALARY, this))
+  : p_validator(new QRegularExpressionValidator(this))
 {
-
+  QRegularExpression rx("[0-9]{1,6}"); // В полуинтервале [0; 1'000'000)
+  p_validator->setRegularExpression(rx);
 }
 
 QWidget* SalaryDelegate::createEditor(QWidget* parent,
@@ -42,8 +41,11 @@ void SalaryDelegate::setModelData(QWidget *editor,
 {
   if(editor)
     {
-      auto* department = static_cast<QTreeWidgetItem*>(index.parent().internalPointer());
+      constexpr auto salaryCol = 1;
       auto* lineEdit = static_cast<QLineEdit*>(editor);
+      auto newData = lineEdit->text().toInt();
+
+      auto* department = static_cast<QTreeWidgetItem*>(index.parent().internalPointer());
 
       auto old_avg = department->data(1, Qt::DisplayRole).toDouble();
       auto old_data = index.data();
@@ -51,9 +53,9 @@ void SalaryDelegate::setModelData(QWidget *editor,
       auto new_avg = (old_summ - old_data.toInt() + lineEdit->text().toInt())
           / department->childCount();
 
-      department->setData(1 ,Qt::DisplayRole, new_avg);
-      model->setData(index, lineEdit->text(), Qt::EditRole);
-      emit dataChanged( old_data, 1);
+      department->setData(salaryCol ,Qt::DisplayRole, new_avg);
+      model->setData(index, newData, Qt::EditRole);
+      emit dataChanged( old_data, salaryCol );
     }
 }
 

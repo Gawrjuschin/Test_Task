@@ -30,11 +30,12 @@ void TextDelegate::setModelData(QWidget *editor,
                                 QAbstractItemModel *model,
                                 const QModelIndex &index) const
 {
+  constexpr auto textCol = 2;
   auto* lineEdit = static_cast<QLineEdit*>(editor);
   QVariant oldData(index.data());
   QVariant newData(lineEdit->text());
   model->setData(index, newData, Qt::EditRole);
-  emit dataChanged( oldData, 2 );
+  emit dataChanged( oldData, textCol );
 }
 
 void TextDelegate::updateEditorGeometry(QWidget *editor,

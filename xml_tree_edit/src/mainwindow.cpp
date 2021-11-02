@@ -27,23 +27,23 @@ MainWindow::MainWindow(QWidget *parent)
   auto* salary_delegate = new SalaryDelegate;
 
   // Делегаты для столбцов
-  p_treeWidget->setItemDelegateForColumn(0, empty_delegate);
-  p_treeWidget->setItemDelegateForColumn(1, salary_delegate);
-  p_treeWidget->setItemDelegateForColumn(2, text_delegate);
+  p_treeWidget->setItemDelegateForColumn(ColNum::COUNT, empty_delegate);
+  p_treeWidget->setItemDelegateForColumn(ColNum::SALARY, salary_delegate);
+  p_treeWidget->setItemDelegateForColumn(ColNum::TEXT, text_delegate);
 
   ui->setupUi(this);
 
   // Настройка заголовка
   auto* headerItem = p_treeWidget->headerItem();
-  headerItem->setData(0, Qt::DisplayRole, QString(tr("Count")));
-  headerItem->setData(1, Qt::DisplayRole, QString(tr("Salary")));
-  headerItem->setData(2, Qt::DisplayRole, QString(tr("Demartment")));
+  headerItem->setData(ColNum::COUNT, Qt::DisplayRole, tr("Count"));
+  headerItem->setData(ColNum::SALARY, Qt::DisplayRole, tr("Salary"));
+  headerItem->setData(ColNum::TEXT, Qt::DisplayRole, tr("Demartment"));
 
   auto* header = p_treeWidget->header();
   header->setStretchLastSection(false);
-  header->setSectionResizeMode(0, QHeaderView::ResizeToContents);
-  header->setSectionResizeMode(1, QHeaderView::ResizeToContents);
-  header->setSectionResizeMode(2, QHeaderView::Stretch);
+  header->setSectionResizeMode(ColNum::COUNT, QHeaderView::ResizeToContents);
+  header->setSectionResizeMode(ColNum::SALARY, QHeaderView::ResizeToContents);
+  header->setSectionResizeMode(ColNum::TEXT, QHeaderView::Stretch);
 
   // Сброс выделения
   p_treeWidget->setCurrentItem(nullptr);
@@ -82,9 +82,9 @@ void MainWindow::addDepartment()
 
   department->setFlags(department->flags() | Qt::ItemIsEditable);
 
-  department->setData(0, Qt::DisplayRole, 0);
-  department->setData(1, Qt::DisplayRole, 0);
-  department->setText(2, QString(tr("Department name")));
+  department->setData(ColNum::COUNT, Qt::DisplayRole, 0);
+  department->setData(ColNum::SALARY, Qt::DisplayRole, tr("N/A"));
+  department->setText(ColNum::TEXT, tr("Department name"));
 
   p_treeWidget->addTopLevelItem(department);
 
@@ -100,9 +100,9 @@ void MainWindow::addEmployee()
   // Должность
   auto* function = new QTreeWidgetItem;
   function->setFlags(function->flags() | Qt::ItemIsEditable);
-  function->setData(0, Qt::DisplayRole, QString());
-  function->setData(1, Qt::DisplayRole, 0);
-  function->setText(2, QString(tr("Employment")));
+  function->setData(ColNum::COUNT, Qt::DisplayRole, QString());
+  function->setData(ColNum::SALARY, Qt::DisplayRole, 0);
+  function->setText(ColNum::TEXT, tr("Employment"));
   department->addChild(function);
 
   // Данные работника
@@ -114,15 +114,16 @@ void MainWindow::addEmployee()
   name->setFlags(surname->flags() | Qt::ItemIsEditable);
   middlename->setFlags(surname->flags() | Qt::ItemIsEditable);
 
-  surname->setText(2, QString(tr("Surname")));
-  name->setText(2, QString(tr("Name")));
-  middlename->setText(2, QString(tr("Middlename")));
+  surname->setText(ColNum::TEXT, tr("Surname"));
+  name->setText(ColNum::TEXT, tr("Name"));
+  middlename->setText(ColNum::TEXT, tr("Middlename"));
 
   // Обновлеие средней з/п и числа сотрудников
-  department->setData(1,Qt::DisplayRole,
-                      (department->data(1, Qt::DisplayRole).toDouble() * (department->childCount() - 1))
+  department->setData(ColNum::SALARY,
+                      Qt::DisplayRole,
+                      (department->data(ColNum::SALARY, Qt::DisplayRole).toDouble() * (department->childCount() - 1))
                       / department->childCount());
-  department->setData(0,Qt::DisplayRole, department->childCount());
+  department->setData(ColNum::COUNT,Qt::DisplayRole, department->childCount());
 
   auto index = department->indexOfChild(function);
   auto* addCommand = new AddEmployeeCommand(function, department, index);
@@ -181,19 +182,18 @@ void MainWindow::slot_delete()
       { // Нужно обновить з/п и количество сотрудников
         auto* currentItem = p_treeWidget->currentItem();
         auto* parent = currentItem->parent();
-        auto old_sum = parent->data(1, Qt::DisplayRole).toDouble() * parent->childCount();
+        auto old_sum = parent->data(ColNum::SALARY, Qt::DisplayRole).toDouble() * parent->childCount();
         auto index = parent->indexOfChild(currentItem);
         parent->removeChild(currentItem);
-        parent->setData(0, Qt::DisplayRole, parent->childCount());
+        parent->setData(ColNum::COUNT, Qt::DisplayRole, parent->childCount());
         if(parent->childCount())
           { // Деление на ноль
-            parent->setData(1, Qt::DisplayRole, (old_sum - currentItem->data(1, Qt::DisplayRole).toInt()) / parent->childCount());
+            parent->setData(ColNum::SALARY, Qt::DisplayRole, (old_sum - currentItem->data(ColNum::SALARY, Qt::DisplayRole).toInt()) / parent->childCount());
           }
         else
           {
-            parent->setData(1, Qt::DisplayRole, QString::fromLatin1("N/A"));
+            parent->setData(ColNum::SALARY, Qt::DisplayRole, tr("N/A"));
           }
-
         m_undoStack.append(new RemoveEmployeeCommand(currentItem, parent, index));
         break;
       }
@@ -278,12 +278,12 @@ void MainWindow::slot_dataChanged(QVariant oldData, int colNum)
   auto* item = p_treeWidget->currentItem();
   switch( colNum )
     { // Определяем, что за столбец изменился
-    case 0:
+    case ColNum::SALARY:
       {
         m_undoStack.append(new EditSalaryCommand(item, oldData));
         break;
       }
-    case 2:
+    case ColNum::TEXT:
       {
         m_undoStack.append(new EditTextCommand(item, oldData));
         break;
@@ -298,40 +298,50 @@ void MainWindow::slot_dataChanged(QVariant oldData, int colNum)
 
 void MainWindow::readDepartments(QXmlStreamReader& reader)
 { // Считывает все отделы
-
   do
     { // Считываем все отделы из перечня
       reader.readNext();
-      if (reader.isStartElement() && reader.name() == QString::fromLatin1("department"))
+      if (reader.isStartElement() && reader.name() == QString("department"))
         { // Найден отдел
           readDepartment(reader);
         }
     }
-  while( !(reader.isEndElement() && reader.name() == QString::fromLatin1("departments")) && !reader.atEnd() );
+  while( !(reader.isEndElement() && reader.name() == QString("departments")) && !reader.atEnd() );
 
 }
 
 void MainWindow::readDepartment(QXmlStreamReader& reader)
 { // Добавляет считанный из readEmployments отдел в список
-
   auto* department = new QTreeWidgetItem; // Новый отдел
   department->setFlags(department->flags() | Qt::ItemIsEditable);
 
-  auto data = reader.attributes().front().value().toUtf8();
-  department->setData(0, Qt::DisplayRole, 0);
-  department->setData(1, Qt::DisplayRole, 0);
-  department->setText(2, data);
+  department->setData(ColNum::COUNT, Qt::DisplayRole, 0);
+
+  QByteArray data{};
+  if(!reader.attributes().isEmpty())
+    { // Если есть аттрибут
+      data = reader.attributes().front().value().toUtf8();
+    }
+  else
+    {
+      data = tr("Department name").toUtf8();
+    }
+  department->setText(ColNum::TEXT, data);
 
   do
     { // Считываем всё содержимое отдела
       reader.readNext();
-      if (reader.isStartElement() && reader.name() == QString::fromLatin1("employments"))
+      if (reader.isStartElement() && reader.name() == QString("employments"))
         { // Найден перечень сотрудников
           readEmployments(reader, department);
+          if( department->childCount() == 0 )
+            { // Пустой отдел
+              department->setData(ColNum::SALARY, Qt::DisplayRole, tr("N/A"));
+            }
           p_treeWidget->addTopLevelItem(department);
         }
     } // Считаны все перечни сотрудников отдела
-  while( !(reader.isEndElement() && reader.name() == QString::fromLatin1("department")) && !reader.atEnd() );
+  while( !(reader.isEndElement() && reader.name() == QString("department")) && !reader.atEnd() );
 
 }
 
@@ -342,24 +352,24 @@ QTreeWidgetItem* MainWindow::readEmployments(QXmlStreamReader& reader, QTreeWidg
     { // Считываем всех сотрудников из перчня
       reader.readNext();
 
-      if (reader.isStartElement() && reader.name() == QString::fromLatin1("employment"))
+      if (reader.isStartElement() && reader.name() == QString("employment"))
         { // Найден сотрудник
           auto* employment = readEmployment(reader); // записываю нового
 
           // Обновление средней з/п и количества сотрудников
-
-          auto old_summ = department->data(1, Qt::DisplayRole).toDouble()
+          auto old_summ = department->data(ColNum::SALARY, Qt::DisplayRole).toDouble()
               * department->childCount();
           department->addChild(employment);
 
-          auto new_summ = (old_summ + employment->data(1, Qt::DisplayRole).toInt())
+          auto new_salary = (old_summ + employment->data(ColNum::SALARY, Qt::DisplayRole).toInt())
               / department->childCount();
-          department->setData(0, Qt::DisplayRole, department->childCount());
-          department->setData(1, Qt::DisplayRole, new_summ);
+          department->setData(ColNum::SALARY, Qt::DisplayRole, new_salary);
+
+          department->setData(ColNum::COUNT, Qt::DisplayRole, department->childCount());
 
         }
 
-    } while( !(reader.isEndElement() && reader.name() == QString::fromLatin1("employments")) && !reader.atEnd() );
+    } while( !(reader.isEndElement() && reader.name() == QString("employments")) && !reader.atEnd() );
 
   return department;
 
@@ -373,12 +383,12 @@ QTreeWidgetItem* MainWindow::readEmployment(QXmlStreamReader& reader)
   auto* name = new QTreeWidgetItem(employment);
   auto* middlename = new QTreeWidgetItem(employment);
 
-  employment->setText(2, QString::fromLatin1("Employment"));
-  employment->setData(1, Qt::DisplayRole, 0);
+  employment->setText(ColNum::TEXT, tr("Employment"));
+  employment->setData(ColNum::SALARY, Qt::DisplayRole, 0);
 
-  surname->setText(2, QString::fromLatin1("Surname"));
-  name->setText(2, QString::fromLatin1("Name"));
-  middlename->setText(2, QString::fromLatin1("Middlename"));
+  surname->setText(ColNum::TEXT, tr("Surname"));
+  name->setText(ColNum::TEXT, tr("Name"));
+  middlename->setText(ColNum::TEXT, tr("Middlename"));
 
   employment->setFlags(employment->flags() | Qt::ItemIsEditable);
   surname->setFlags(employment->flags() | Qt::ItemIsEditable);
@@ -389,40 +399,36 @@ QTreeWidgetItem* MainWindow::readEmployment(QXmlStreamReader& reader)
     { // Считываем все данные сотрудника (отсутствующие будут запослнены значением по умолчанию)
       reader.readNext();
 
-      if(reader.isStartElement() && reader.name() == QString::fromLatin1("surname"))
+      if(reader.isStartElement())
         {
-          reader.readNext();
-          auto data = reader.text().toUtf8();
-          surname->setText(2, data);
+          auto data = reader.readElementText();
+
+          if(reader.name() == QString("surname"))
+            {
+              surname->setText(ColNum::TEXT, data);
+            }
+
+          if(reader.name() == QString("name"))
+            {
+              name->setText(ColNum::TEXT, data);
+            }
+
+          if(reader.name() == QString("middleName"))
+            {
+              middlename->setText(ColNum::TEXT, data);
+            }
+          if(reader.name() == QString("function"))
+            {
+              employment->setText(ColNum::TEXT, data);
+            }
+          if(reader.name() == QString("salary"))
+            {
+              employment->setData(ColNum::SALARY, Qt::DisplayRole, data.toInt());
+            }
         }
 
-      if(reader.isStartElement() && reader.name() == QString::fromLatin1("name"))
-        {
-          reader.readNext();
-          auto data = reader.text().toUtf8();
-          name->setText(2, data);
-        }
 
-      if(reader.isStartElement() && reader.name() == QString::fromLatin1("middleName"))
-        {
-          reader.readNext();
-          auto data = reader.text().toUtf8();
-          middlename->setText(2, data);
-        }
-      if(reader.isStartElement() && reader.name() == QString::fromLatin1("function"))
-        {
-          reader.readNext();
-          auto data = reader.text().toUtf8();
-          employment->setText(2, data);
-        }
-      if(reader.isStartElement() && reader.name() == QString::fromLatin1("salary"))
-        {
-          reader.readNext();
-          auto data = reader.text().toInt();
-          employment->setData(1, Qt::DisplayRole, data);
-        }
-      reader.readNext();
-    } while( !(reader.isEndElement() && reader.name() == QString::fromLatin1("employment")) && !reader.atEnd() );
+    } while( !(reader.isEndElement() && reader.name() == QString("employment")) && !reader.atEnd() );
 
   return employment;
 
@@ -471,9 +477,8 @@ void MainWindow::slot_open()
       do
         { // Считываю весь файл
           reader.readNext();
-          if (reader.isStartElement() && reader.name() == QString::fromLatin1("departments"))
+          if (reader.isStartElement() && reader.name() == QString("departments"))
             { // Найден перечень отделов
-              qDebug() << "readDepartments";
               readDepartments(reader);
             }
         } while( !reader.atEnd() && !reader.hasError());
@@ -498,7 +503,7 @@ void MainWindow::saveDocument()
 
   writer.writeStartDocument();
 
-  writer.writeStartElement(QString::fromLatin1("departments"));
+  writer.writeStartElement(QString("departments"));
 
   auto N = p_treeWidget->topLevelItemCount();
   for(auto i = 0; i < N; ++i)
@@ -514,29 +519,29 @@ void MainWindow::saveDocument()
 
 void MainWindow::writeEmployee(QXmlStreamWriter& writer, QTreeWidgetItem* employee)
 {
-  writer.writeStartElement(QString::fromLatin1("employment"));
+  writer.writeStartElement(QString("employment"));
 
-  writer.writeStartElement(QString::fromLatin1("name"));
+  writer.writeStartElement(QString("name"));
   auto* name = employee->child(1);
-  writer.writeCharacters(name->text(2));
+  writer.writeCharacters(name->text(ColNum::TEXT));
   writer.writeEndElement();
 
-  writer.writeStartElement(QString::fromLatin1("surname"));
+  writer.writeStartElement(QString("surname"));
   auto* surname = employee->child(0);
-  writer.writeCharacters(surname->text(2));
+  writer.writeCharacters(surname->text(ColNum::TEXT));
   writer.writeEndElement();
 
-  writer.writeStartElement(QString::fromLatin1("middleName"));
+  writer.writeStartElement(QString("middleName"));
   auto* middlename = employee->child(2);
-  writer.writeCharacters(middlename->text(2));
+  writer.writeCharacters(middlename->text(ColNum::TEXT));
   writer.writeEndElement();
 
-  writer.writeStartElement(QString::fromLatin1("function"));
-  writer.writeCharacters(employee->text(2));
+  writer.writeStartElement(QString("function"));
+  writer.writeCharacters(employee->text(ColNum::TEXT));
   writer.writeEndElement();
 
-  writer.writeStartElement(QString::fromLatin1("salary"));
-  writer.writeCharacters(employee->text(1));
+  writer.writeStartElement(QString("salary"));
+  writer.writeCharacters(employee->text(ColNum::SALARY));
   writer.writeEndElement();
 
   writer.writeEndElement();
@@ -545,7 +550,7 @@ void MainWindow::writeEmployee(QXmlStreamWriter& writer, QTreeWidgetItem* employ
 void MainWindow::writeEmployees(QXmlStreamWriter& writer, QTreeWidgetItem* department)
 {
   auto N = department->childCount();
-  writer.writeStartElement(QString::fromLatin1("employments"));
+  writer.writeStartElement(QString("employments"));
   for(auto i = 0; i < N; ++i)
     {
       writeEmployee(writer, department->child(i));
@@ -556,8 +561,8 @@ void MainWindow::writeEmployees(QXmlStreamWriter& writer, QTreeWidgetItem* depar
 
 void MainWindow::writeDepartment(QXmlStreamWriter& writer, QTreeWidgetItem* department)
 {
-  writer.writeStartElement(QString::fromLatin1("department"));
-  writer.writeAttribute(QString::fromLatin1("id"), department->text(2));
+  writer.writeStartElement(QString("department"));
+  writer.writeAttribute(QString("id"), department->text(ColNum::TEXT));
   writeEmployees(writer, department);
   writer.writeEndElement();
 }
